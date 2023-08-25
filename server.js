@@ -5,11 +5,15 @@ const admin = require('firebase-admin');
 fastify.register(require('@fastify/url-data'));
 const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json');
 
-fastify.addHook('onRequest', (req, reply, done) => {
-    reply.header('Access-Control-Allow-Origin', '*');
-    reply.header('Access-Control-Allow-Methods', 'GET, POST');
-    done();
-});
+fastify.options('*', function (request, reply) {
+    reply.send()
+})
+
+fastify.addHook('onSend', function (request, reply, payload, next) {
+    reply.header('Access-Control-Allow-Origin', '*')
+    reply.header('Access-Control-Allow-Headers', '*')
+    next()
+})
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
