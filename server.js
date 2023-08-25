@@ -18,9 +18,45 @@ admin.initializeApp({
 
 const db = admin.firestore();
 
-const urlMap = {};
+fastify.get('/api/shorten', async (req, res) => {
+    try {
+        const querySnapshot = await db.collection('shortened_urls').get();
+
+        const data = [];
+        querySnapshot.forEach((doc) => {
+            const key = doc.id;
+            const originalUrl = doc.data().originalUrl;
+            data.push({ key, url: originalUrl });
+        });
+
+        res.status(200).send({ data });
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: 'An error occurred while fetching data' });
+    }
+});
+
+fastify.get('/api/shorten/:key', async (req, res) => {
+    const key = req.params.key;
+
+    try {
+        const docRef = db.collection('shortened_urls').doc(key);
+        const doc = await docRef.get();
+
+        if (doc.exists) {
+            const originalUrl = doc.data().originalUrl;
+            res.status(200).send({ url: originalUrl });
+        } else {
+            res.status(404).send({ error: 'URL not found' });
+        }
+    } catch (error) {
+        console.error(error);
+        res.status(500).send({ error: 'An error occurred while fetching data' });
+    }
+});
 
 fastify.post('/api/shorten', async (req, res) => {
+    const urlMap = {};
     const originalUrl = req.body.originalUrl;
     let shortId = req.body.shortId;
 
@@ -50,26 +86,6 @@ fastify.post('/api/shorten', async (req, res) => {
 
     res.status(201).send({ shortenedUrl });
 });
-
-fastify.get('/:key', async (req, res) => {
-    const key = req.params.key;
-
-    try {
-        const docRef = db.collection('shortened_urls').doc(key);
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-            const originalUrl = doc.data().originalUrl;
-            res.status(200).send({ url: originalUrl });
-        } else {
-            res.status(404).send({ error: 'URL not found' });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ error: 'An error occurred while fetching data' });
-    }
-});
-
 
 const PORT = 3000;
 fastify.listen(PORT, (err) => {
