@@ -31,8 +31,8 @@ fastify.get('/:key', async (req, res) => {
         const doc = await docRef.get();
 
         if (doc.exists) {
-            const originalUrl = doc.data().originalUrl;
-            res.redirect(originalUrl);
+            const orginalURL = doc.data().orginalURL;
+            res.redirect(orginalURL);
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -49,9 +49,9 @@ fastify.get('/api/shorten', async (req, res) => {
         const data = [];
         querySnapshot.forEach((doc) => {
             const key = doc.id;
-            const originalUrl = doc.data().originalUrl;
+            const orginalURL = doc.data().orginalURL;
             const shortenedUrl = doc.data().shortenedUrl;
-            data.push({ key, url: originalUrl, shortenedUrl: shortenedUrl});
+            data.push({ key, url: orginalURL, shortenedUrl: shortenedUrl});
         });
 
         res.status(200).send({ data });
@@ -69,9 +69,9 @@ fastify.get('/api/shorten/:key', async (req, res) => {
         const doc = await docRef.get();
 
         if (doc.exists) {
-            const originalUrl = doc.data().originalUrl;
+            const orginalURL = doc.data().orginalURL;
             const shortenedUrl = doc.data().shortenedUrl;
-            res.status(200).send({ originalUrl, shortenedUrl });
+            res.status(200).send({ orginalURL, shortenedUrl });
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -82,7 +82,7 @@ fastify.get('/api/shorten/:key', async (req, res) => {
 });
 
 fastify.post('/api/shorten', async (req, res) => {
-    const originalUrl = req.body.originalUrl;
+    const orginalURL = req.body.orginalURL;
     let shortId = req.body.shortId;
 
     if (shortId === null) {
@@ -107,9 +107,9 @@ fastify.post('/api/shorten', async (req, res) => {
     const shortenedUrl = `https://url-s.web.app/${shortId}`;
 
     const docRef = db.collection('shortened_urls').doc(shortId);
-    await docRef.set({ originalUrl, shortenedUrl });
+    await docRef.set({ orginalURL, shortenedUrl });
 
-    urlMap[shortId] = originalUrl;
+    urlMap[shortId] = orginalURL;
 
     res.status(201).send({ shortenedUrl });
 });
