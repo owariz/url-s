@@ -4,6 +4,11 @@ const admin = require('firebase-admin');
 
 fastify.register(require('@fastify/url-data'));
 
+fastify.register(require('fastify-cors'), {
+    origin: true,
+    methods: ['GET', 'POST'],
+  });
+
 // กำหนดค่าการเชื่อมต่อ Firebase
 const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json'); // เปลี่ยนเป็นพาทของไฟล์ serviceAccountKey.json
 admin.initializeApp({
