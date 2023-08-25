@@ -31,8 +31,8 @@ fastify.get('/:key', async (req, res) => {
         const doc = await docRef.get();
 
         if (doc.exists) {
-            const orginalURL = doc.data().orginalURL;
-            res.redirect(orginalURL);
+            const originalURL = doc.data().originalURL;
+            res.redirect(originalURL);
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -49,9 +49,9 @@ fastify.get('/api/shorten', async (req, res) => {
         const data = [];
         querySnapshot.forEach((doc) => {
             const key = doc.id;
-            const orginalURL = doc.data().orginalURL;
+            const originalURL = doc.data().originalURL;
             const shortenedUrl = doc.data().shortenedUrl;
-            data.push({ key, url: orginalURL, shortenedUrl: shortenedUrl});
+            data.push({ key, url: originalURL, shortenedUrl: shortenedUrl});
         });
 
         res.status(200).send({ data });
@@ -69,9 +69,9 @@ fastify.get('/api/shorten/:key', async (req, res) => {
         const doc = await docRef.get();
 
         if (doc.exists) {
-            const orginalURL = doc.data().orginalURL;
+            const originalURL = doc.data().originalURL;
             const shortenedUrl = doc.data().shortenedUrl;
-            res.status(200).send({ orginalURL, shortenedUrl });
+            res.status(200).send({ originalURL, shortenedUrl });
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -82,36 +82,40 @@ fastify.get('/api/shorten/:key', async (req, res) => {
 });
 
 fastify.post('/api/shorten', async (req, res) => {
-    const orginalURL = req.body.orginalURL;
-    let shortId = req.body.shortId;
-
-    if (shortId === null) {
-        shortId = generateRandomString(4);
-    } else if (!shortId) {
-        shortId = generateRandomString(4);
-    } else if (urlMap[shortId]) {
-        let attempts = 0;
-        while (attempts < 3) {
-            const newShortId = generateRandomString(6);
-            if (!urlMap[newShortId]) {
-                shortId = newShortId;
-                break;
+    try {
+        const originalURL = req.body.originalURL;
+        let shortId = req.body.shortId;
+    
+        if (shortId === null) {
+            shortId = generateRandomString(4);
+        } else if (!shortId) {
+            shortId = generateRandomString(4);
+        } else if (urlMap[shortId]) {
+            let attempts = 0;
+            while (attempts < 3) {
+                const newShortId = generateRandomString(6);
+                if (!urlMap[newShortId]) {
+                    shortId = newShortId;
+                    break;
+                }
+                attempts++;
             }
-            attempts++;
+            if (attempts === 3) {
+                return res.status(400).send({ error: 'Custom URL already exists' });
+            }
         }
-        if (attempts === 3) {
-            return res.status(400).send({ error: 'Custom URL already exists' });
-        }
+    
+        const shortenedUrl = `https://url-s.web.app/${shortId}`;
+    
+        const docRef = db.collection('shortened_urls').doc(shortId);
+        await docRef.set({ originalURL, shortenedUrl });
+    
+        urlMap[shortId] = originalURL;
+    
+        res.status(201).send({ shortenedUrl });
+    } catch (err) {
+        res.status(400).send({ msg: "Ahhhh!!!" });
     }
-
-    const shortenedUrl = `https://url-s.web.app/${shortId}`;
-
-    const docRef = db.collection('shortened_urls').doc(shortId);
-    await docRef.set({ orginalURL, shortenedUrl });
-
-    urlMap[shortId] = orginalURL;
-
-    res.status(201).send({ shortenedUrl });
 });
 
 const PORT = 3000;
