@@ -3,20 +3,20 @@ const crypto = require('crypto');
 const admin = require('firebase-admin');
 
 fastify.register(require('@fastify/url-data'));
+const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json');
 
-fastify.register(require('fastify-cors'), {
-    origin: true,
-    methods: ['GET', 'POST'],
+fastify.addHook('onRequest', (req, reply, done) => {
+    reply.header('Access-Control-Allow-Origin', '*');
+    reply.header('Access-Control-Allow-Methods', 'GET, POST');
+    done();
   });
 
-// กำหนดค่าการเชื่อมต่อ Firebase
-const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json'); // เปลี่ยนเป็นพาทของไฟล์ serviceAccountKey.json
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
-  databaseURL: 'https://url-s-59411-default-rtdb.asia-southeast1.firebasedatabase.app/' // เปลี่ยนเป็น URL ของ Firebase ของคุณ
+  databaseURL: 'https://url-s-59411-default-rtdb.asia-southeast1.firebasedatabase.app/'
 });
 
-const db = admin.firestore(); // เรียกใช้งาน Firestore
+const db = admin.firestore();
 
 const urlMap = {};
 
@@ -25,9 +25,8 @@ fastify.post('/api/shorten', async (req, res) => {
     let shortId = req.body.shortId;
 
     if (!shortId) {
-        shortId = generateRandomString(4); // สุ่มสตริงที่มีความยาว 6 ตัวอักษร
+        shortId = generateRandomString(4);
     } else if (urlMap[shortId]) {
-        // ถ้า shortId ซ้ำกันใน urlMap ให้สร้างสตริงสุ่มใหม่แล้วลองใหม่
         let attempts = 0;
         while (attempts < 3) {
             const newShortId = generateRandomString(6);
@@ -44,7 +43,6 @@ fastify.post('/api/shorten', async (req, res) => {
 
     const shortenedUrl = `https://url-s.web.app/${shortId}`;
 
-    // เก็บข้อมูลใน Firestore
     const docRef = db.collection('shortened_urls').doc(shortId);
     await docRef.set({ originalUrl });
 
