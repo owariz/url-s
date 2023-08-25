@@ -9,7 +9,7 @@ fastify.addHook('onRequest', (req, reply, done) => {
     reply.header('Access-Control-Allow-Origin', '*');
     reply.header('Access-Control-Allow-Methods', 'GET, POST');
     done();
-  });
+});
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -17,6 +17,7 @@ admin.initializeApp({
 });
 
 const db = admin.firestore();
+const urlMap = {};
 
 fastify.get('/api/shorten', async (req, res) => {
     try {
@@ -26,7 +27,8 @@ fastify.get('/api/shorten', async (req, res) => {
         querySnapshot.forEach((doc) => {
             const key = doc.id;
             const originalUrl = doc.data().originalUrl;
-            data.push({ key, url: originalUrl });
+            const shortenedUrl = doc.data().shortenedUrl;
+            data.push({ key, url: originalUrl, shortenedUrl: shortenedUrl});
         });
 
         res.status(200).send({ data });
@@ -45,7 +47,8 @@ fastify.get('/api/shorten/:key', async (req, res) => {
 
         if (doc.exists) {
             const originalUrl = doc.data().originalUrl;
-            res.status(200).send({ url: originalUrl });
+            const shortenedUrl = doc.data().shortenedUrl;
+            res.status(200).send({ originalUrl, shortenedUrl });
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -56,7 +59,6 @@ fastify.get('/api/shorten/:key', async (req, res) => {
 });
 
 fastify.post('/api/shorten', async (req, res) => {
-    const urlMap = {};
     const originalUrl = req.body.originalUrl;
     let shortId = req.body.shortId;
 
@@ -80,7 +82,7 @@ fastify.post('/api/shorten', async (req, res) => {
     const shortenedUrl = `https://url-s.web.app/${shortId}`;
 
     const docRef = db.collection('shortened_urls').doc(shortId);
-    await docRef.set({ originalUrl });
+    await docRef.set({ originalUrl, shortenedUrl });
 
     urlMap[shortId] = originalUrl;
 
