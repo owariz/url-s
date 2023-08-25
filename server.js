@@ -81,7 +81,7 @@ fastify.post('/api/shorten', async (req, res) => {
     const originalUrl = req.body.originalUrl;
     let shortId = req.body.shortId;
 
-    if (shortId === "null") {
+    if (shortId === null) {
         shortId = generateRandomString(4);
     } else if (!shortId) {
         shortId = generateRandomString(4);
