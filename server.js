@@ -1,6 +1,8 @@
 const fastify = require('fastify')();
 const crypto = require('crypto');
 const admin = require('firebase-admin');
+const cache = require('./cache'); // เรียกใช้งานโมดูลแคช
+const path = require('path');
 
 fastify.register(require('@fastify/url-data'));
 const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json');
