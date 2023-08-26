@@ -25,25 +25,6 @@ admin.initializeApp({
 const db = admin.firestore();
 const urlMap = {};
 
-fastify.get('/:key', async (req, res) => {
-    const key = req.params.key;
-
-    try {
-        const docRef = db.collection('shortened_urls').doc(key);
-        const doc = await docRef.get();
-
-        if (doc.exists) {
-            const originalURL = doc.data().originalURL;
-            res.redirect(originalURL);
-        } else {
-            res.status(404).send({ error: 'URL not found' });
-        }
-    } catch (error) {
-        console.error(error);
-        res.status(500).send({ error: 'An error occurred while fetching data' });
-    }
-});
-
 fastify.get('/api/shorten', async (req, res) => {
     try {
         const querySnapshot = await db.collection('shortened_urls').get();
