@@ -65,13 +65,27 @@ fastify.get('/api/shorten/:key', async (req, res) => {
     const key = req.params.key;
 
     try {
+        // ดึงข้อมูลจากแคชก่อน
+        const cachedData = cache.get(key);
+        if (cachedData) {
+            console.log('Data retrieved from cache');
+            res.status(200).send(cachedData);
+            return;
+        }
+
         const docRef = db.collection('shortened_urls').doc(key);
         const doc = await docRef.get();
 
         if (doc.exists) {
             const originalURL = doc.data().originalURL;
             const shortenedUrl = doc.data().shortenedUrl;
-            res.status(200).send({ originalURL, shortenedUrl });
+            await docRef.update({ lastUsed: admin.firestore.FieldValue.serverTimestamp() });
+
+            const responseData = { originalURL, shortenedUrl };
+            // เก็บข้อมูลในแคชเพื่อใช้ในครั้งถัดไป
+            cache.set(key, responseData);
+
+            res.status(200).send(responseData);
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
@@ -118,6 +132,8 @@ fastify.post('/api/shorten', async (req, res) => {
     }
 });
 
+require('./cleanup');
+
 const PORT = 3000;
 fastify.listen({ port: PORT }, (err) => {
     if (err) {
@@ -126,7 +142,6 @@ fastify.listen({ port: PORT }, (err) => {
     }
     console.log(`Server is running on port ${PORT}`);
 });
-
 
 function generateRandomString(length) {
     const characters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
