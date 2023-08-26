@@ -1,6 +1,9 @@
 const fastify = require('fastify')();
 const crypto = require('crypto');
 const admin = require('firebase-admin');
+const NodeCache = require('node-cache');
+
+const cache = new NodeCache();
 
 fastify.register(require('@fastify/url-data'));
 const serviceAccount = require('./url-s-59411-firebase-adminsdk-5pevd-2d869f8a03.json');
@@ -46,6 +49,14 @@ fastify.get('/api/shorten/:key', async (req, res) => {
     const key = req.params.key;
 
     try {
+        // ดึงข้อมูลจากแคชก่อน
+        const cachedData = cache.get(key);
+        if (cachedData) {
+            console.log('Data retrieved from cache');
+            res.status(200).send(cachedData);
+            return;
+        }
+
         const docRef = db.collection('shortened_urls').doc(key);
         const doc = await docRef.get();
 
@@ -53,7 +64,12 @@ fastify.get('/api/shorten/:key', async (req, res) => {
             const originalURL = doc.data().originalURL;
             const shortenedUrl = doc.data().shortenedUrl;
             await docRef.update({ lastUsed: admin.firestore.FieldValue.serverTimestamp() });
-            res.status(200).send({ originalURL, shortenedUrl });
+
+            const responseData = { originalURL, shortenedUrl };
+            // เก็บข้อมูลในแคชเพื่อใช้ในครั้งถัดไป
+            cache.set(key, responseData);
+
+            res.status(200).send(responseData);
         } else {
             res.status(404).send({ error: 'URL not found' });
         }
