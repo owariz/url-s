@@ -24,7 +24,7 @@ admin.initializeApp({
 const db = admin.firestore();
 const urlMap = {};
 
-const MAX_UNUSED_URL_DURATION = 5000; // 30 วันในหน่วยมิลลิวินาที
+const MAX_UNUSED_URL_DURATION = 30 * 24 * 60 * 60 * 1000; // 30 วันในหน่วยมิลลิวินาที
 const currentTime = new Date().getTime();
 
 fastify.get("/api/shorten", async (req, res) => {
