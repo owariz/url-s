@@ -39,7 +39,7 @@ fastify.get("/api/shorten", async (req, res) => {
       data.push({ key, url: originalURL, shortenedUrl: shortenedUrl });
     });
 
-    res.status(200).send({ data });
+    res.status(200).json({ msg: "NOTHING HERE" });
   } catch (error) {
     console.error(error);
     res.status(500).send({ error: "An error occurred while fetching data" });
